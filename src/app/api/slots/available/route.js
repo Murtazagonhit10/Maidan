@@ -1,5 +1,6 @@
-import { getConnection , sql } from '../../../../../lib/db';
 import { NextResponse } from 'next/server';
+import sql from 'mssql';
+import { getConnection } from '../../../../../lib/db';
 
 export async function GET(request) {
     try {
@@ -8,27 +9,37 @@ export async function GET(request) {
         const date = searchParams.get('date');
 
         if (!courtId || !date) {
-            return NextResponse.json(
-                { error: 'courtId and date are required' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'courtId and date are required' }, { status: 400 });
         }
 
         const pool = await getConnection();
+
+        // Get all slots for this court on this date
         const result = await pool.request()
-            .input('courtId', sql.Int, courtId)
+            .input('courtId', sql.Int, parseInt(courtId))
             .input('date', sql.Date, date)
             .query(`
-        SELECT SlotID, StartTime, EndTime, Price, IsPeak
-        FROM Slots
-        WHERE CourtID = @courtId
-        AND SlotDate = @date
-        AND Status = 'Available'
-        ORDER BY StartTime
-    `);
+                SELECT 
+                    SlotID,
+                    CONVERT(VARCHAR(5), StartTime, 108) as StartTime,
+                    CONVERT(VARCHAR(5), EndTime, 108) as EndTime,
+                    Price,
+                    IsPeak,
+                    Status
+                FROM Slots
+                WHERE CourtID = @courtId AND SlotDate = @date
+                ORDER BY StartTime
+            `);
 
-        return NextResponse.json(result.recordset);
+        return NextResponse.json({
+            slots: result.recordset,
+            generated: false,
+        });
+
     } catch (err) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        console.error('Slots API error:', err);
+        return NextResponse.json({ 
+            error: err.message,
+        }, { status: 500 });
     }
 }

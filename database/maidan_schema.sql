@@ -1005,3 +1005,81 @@ ADD DateOfBirth DATE NULL;
 
 ALTER TABLE Venues
 ADD LocationURL VARCHAR(255) NULL;
+
+
+-- Fix Venues table
+ALTER TABLE Venues ALTER COLUMN Description VARCHAR(MAX);
+
+-- Fix Sports table  
+ALTER TABLE Sports ALTER COLUMN Description VARCHAR(MAX);
+
+-- Fix PromoCodes table
+ALTER TABLE PromoCodes ALTER COLUMN Description VARCHAR(MAX);
+
+
+UPDATE Sports 
+SET Icon = 'https://cdn-icons-png.flaticon.com/512/3095/3095110.png' 
+WHERE SportName = 'Futsal';
+
+UPDATE Sports 
+SET Icon = 'https://cdn-icons-png.flaticon.com/512/169/169805.png' 
+WHERE SportName = 'Turf Cricket';
+
+UPDATE Sports 
+SET Icon = 'https://cdn-icons-png.flaticon.com/512/1502/1502990.png' 
+WHERE SportName = 'Padel';
+
+
+UPDATE Courts 
+SET PeakStartTime = '18:00', 
+    PeakEndTime = '22:00',
+    PeakDays = 'Friday,Saturday,Sunday'
+WHERE PeakStartTime IS NULL AND Status = 'Active';
+
+UPDATE Courts 
+SET PeakStartTime = NULL, 
+    PeakEndTime = NULL,
+    PeakDays = NULL
+WHERE PeakStartTime IS NULL 
+   OR PeakStartTime = '00:00:00'
+   OR PeakStartTime = '1970-01-01'
+   OR PeakStartTime = '1970-01-01 00:00:00';
+
+
+-- Insert slots for CourtID 3 on 2027-01-02
+
+INSERT INTO Slots (CourtID, SlotDate, StartTime, EndTime, Price, IsPeak, Status)
+VALUES 
+(3, '2027-01-02', '09:00', '10:00', 800, 0, 'Available'),
+(3, '2027-01-02', '10:00', '11:00', 800, 0, 'Available'),
+(3, '2027-01-02', '11:00', '12:00', 800, 0, 'Available'),
+(3, '2027-01-02', '12:00', '13:00', 800, 0, 'Available'),
+(3, '2027-01-02', '13:00', '14:00', 800, 0, 'Available'),
+(3, '2027-01-02', '14:00', '15:00', 800, 0, 'Available'),
+(3, '2027-01-02', '15:00', '16:00', 800, 0, 'Available'),
+(3, '2027-01-02', '16:00', '17:00', 800, 0, 'Available'),
+(3, '2027-01-02', '17:00', '18:00', 800, 0, 'Available'),
+(3, '2027-01-02', '18:00', '19:00', 800, 0, 'Available'),
+(3, '2027-01-02', '19:00', '20:00', 800, 0, 'Available'),
+(3, '2027-01-02', '20:00', '21:00', 800, 0, 'Available');
+
+
+-- Delete existing slots for court 3 on these dates to avoid duplicates
+DELETE FROM Slots WHERE CourtID = 3 AND SlotDate = '2026-03-30';
+
+-- Insert slots for CourtID 3 on March 30, 2026
+INSERT INTO Slots (CourtID, SlotDate, StartTime, EndTime, Price, IsPeak, Status)
+VALUES 
+(3, '2026-03-30', '09:00', '10:00', 800, 0, 'Available'),
+(3, '2026-03-30', '10:00', '11:00', 800, 0, 'Available'),
+(3, '2026-03-30', '11:00', '12:00', 800, 0, 'Available'),
+(3, '2026-03-30', '12:00', '13:00', 800, 0, 'Available'),
+(3, '2026-03-30', '13:00', '14:00', 800, 0, 'Available'),
+(3, '2026-03-30', '14:00', '15:00', 800, 0, 'Available'),
+(3, '2026-03-30', '15:00', '16:00', 800, 0, 'Available'),
+(3, '2026-03-30', '16:00', '17:00', 800, 0, 'Available'),
+(3, '2026-03-30', '17:00', '18:00', 800, 0, 'Available'),
+(3, '2026-03-30', '18:00', '19:00', 800, 0, 'Available'),
+(3, '2026-03-30', '19:00', '20:00', 800, 0, 'Available'),
+(3, '2026-03-30', '20:00', '21:00', 800, 0, 'Available'),
+(3, '2026-03-30', '21:00', '22:00', 800, 0, 'Available');

@@ -1,8 +1,9 @@
 import './tokens.css';
+import LenisProvider from '../components/LenisProvider';
 
 export const metadata = {
-  title       : 'Maidan — Book Your Court',
-  description : 'Real-time sports court booking across cricket, futsal and padel venues in Lahore.',
+  title: 'Maidan — Book Your Court',
+  description: 'Real-time sports court booking across cricket, futsal and padel venues in Lahore.',
 };
 
 export default function RootLayout({ children }) {
@@ -21,9 +22,13 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Mulish:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap"
           rel="stylesheet"
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
       </head>
-      <body>{children}</body>
+      <body>
+        <LenisProvider>
+          {children}
+        </LenisProvider>
+      </body>
     </html>
   );
 }

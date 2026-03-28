@@ -4,9 +4,10 @@ GO
 SELECT * FROM Users;
 SELECT * FROM Bookings
 SELECT * FROM Courts
+SELECT * FROM Reviews;
 
 SELECT * FROM Venues WHERE OwnerID = 2;
-
+SELECT VenueID, Name, Status FROM Venues;
 -- DELETE FROM Complaints;
 -- DELETE FROM User_Memberships;
 -- DELETE FROM Reviews;

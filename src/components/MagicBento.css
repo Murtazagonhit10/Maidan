@@ -1,0 +1,91 @@
+:root {
+  --magic-glow-color: 210, 140, 60;
+  --magic-border-color: rgba(210, 140, 60, 0.2);
+  --magic-bg-dark: #1a1108;
+}
+
+.magic-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  padding: 0.5rem;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .magic-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.magic-card {
+  position: relative;
+  background: var(--magic-bg-dark);
+  border: 1px solid var(--magic-border-color);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  will-change: transform;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 200px;
+}
+
+.magic-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(210, 140, 60, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Border glow effect */
+.magic-card--glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--magic-glow-color), calc(var(--glow-intensity) * 0.6)) 0%,
+    rgba(var(--magic-glow-color), calc(var(--glow-intensity) * 0.2)) 30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.magic-card:hover::after {
+  opacity: 1;
+}
+
+/* Particle styling */
+.magic-particle {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.global-spotlight {
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  z-index: 200 !important;
+  pointer-events: none;
+}
+
+.magic-grid-section {
+  position: relative;
+  user-select: none;
+}

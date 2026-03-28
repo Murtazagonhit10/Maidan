@@ -7,30 +7,31 @@ import HeroScene from '@/components/HeroScene';
 import { RevealText } from '@/components/Motion';
 import { SpotlightCard, TiltCard, MagBtn, AnimCounter, Marquee, ImageStrip, TextRibbon } from '@/components/Ui';
 import ScrollStackHIW from '@/components/ScrollStackHIW';
+import MagneticButton from '@/components/MagneticButton';
 import '@/app/tokens.css';
 
 /* ── Data ── */
 const sports = [
-  { 
-    title: 'Cricket', 
-    tag: 'Nets & Turf', 
-    desc: "Full-length nets, premium turf, floodlit courts. Lahore's best cricket facilities — instantly bookable.", 
-    image: '/pictures/sports/cricket.jpg', 
-    count: '47 venues' 
+  {
+    title: 'Cricket',
+    tag: 'Nets & Turf',
+    desc: "Full-length nets, premium turf, floodlit courts. Lahore's best cricket facilities — instantly bookable.",
+    image: '/pictures/sports/cricket.jpg',
+    count: '47 venues'
   },
-  { 
-    title: 'Futsal', 
-    tag: 'Indoor Courts', 
-    desc: 'Fast-paced high-energy indoor courts built for serious players. Find your match, book your lane.', 
-    image: '/pictures/sports/futsal.jpg', 
-    count: '38 venues' 
+  {
+    title: 'Futsal',
+    tag: 'Indoor Courts',
+    desc: 'Fast-paced high-energy indoor courts built for serious players. Find your match, book your lane.',
+    image: '/pictures/sports/futsal.jpg',
+    count: '38 venues'
   },
-  { 
-    title: 'Padel', 
-    tag: 'Glass Enclosures', 
-    desc: "Lahore's fastest-growing sport. Glass-walled enclosures, professional equipment, elite atmosphere.", 
-    image: '/pictures/sports/padel.jpg', 
-    count: '21 venues' 
+  {
+    title: 'Padel',
+    tag: 'Glass Enclosures',
+    desc: "Lahore's fastest-growing sport. Glass-walled enclosures, professional equipment, elite atmosphere.",
+    image: '/pictures/sports/padel.jpg',
+    count: '21 venues'
   },
 ];
 const features = [
@@ -405,6 +406,21 @@ export default function Home() {
           .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
           .reviews-agg-val { font-size: 3.5rem; }
         }
+
+        .scroll-3d-container {
+  position: fixed;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .scroll-3d-container {
+    display: none;
+  }
+}
       `}</style>
 
       <Navbar />
@@ -432,7 +448,7 @@ export default function Home() {
                   <p>No double bookings. No wasted trips. No lost revenue. Just sport.</p>
                 </div>
                 <div className="phil-btns">
-                  <MagBtn href="/venues">Explore Venues</MagBtn>
+                  <MagneticButton asLink href="/venues" className="btn-fill" strength={0.28}>Explore Venues</MagneticButton>
                   <MagBtn href="/register" className="btn-outline">List Your Facility</MagBtn>
                 </div>
               </div>
@@ -582,7 +598,7 @@ export default function Home() {
                   <div className="venue-area">{v.area}</div>
                   <div className="venue-foot">
                     <div className="venue-rating"><span>★</span>{v.r}</div>
-                    <Link href="/venues" className="btn-fill" style={{ padding: '.38rem .85rem', fontSize: '.62rem' }}>Book →</Link>
+                    <MagneticButton asLink href="/venues" className="btn-fill" style={{ padding: '.38rem .85rem', fontSize: '.62rem' }} strength={0.28}>Book →</MagneticButton>
                   </div>
                 </div>
               </div>
@@ -642,7 +658,7 @@ export default function Home() {
               Your court is one tap away.
             </p>
             <div className="cta-actions">
-              <MagBtn href="/register">Create Free Account</MagBtn>
+              <MagneticButton asLink href="/register" className="btn-fill" strength={0.28}>Create Free Account</MagneticButton>
               <MagBtn href="/venues" className="btn-outline">Browse Venues</MagBtn>
             </div>
           </div>

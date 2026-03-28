@@ -26,7 +26,7 @@ function Stars({ rating }) {
 
 function ElectricBorderCanvas({ active }) {
   const canvasRef = useRef(null);
-  const rafRef    = useRef(null);
+  const rafRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -41,8 +41,8 @@ function ElectricBorderCanvas({ active }) {
     }));
     function ptOnPerim(d, w, h) {
       const p = 2 * (w + h); d = ((d % p) + p) % p;
-      if (d < w)         return [d, 0];
-      if (d < w + h)     return [w, d - w];
+      if (d < w) return [d, 0];
+      if (d < w + h) return [w, d - w];
       if (d < 2 * w + h) return [w - (d - w - h), h];
       return [0, h - (d - 2 * w - h)];
     }
@@ -118,11 +118,15 @@ export default function VenueCard({ venue, index = 0 }) {
           {venue.courtCount} {venue.courtCount === 1 ? 'court' : 'courts'}
         </div>
         <div style={{ position: 'absolute', bottom: '.75rem', left: '.75rem', right: '.75rem', zIndex: 2, display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
-          {venue.sports.map(sport => (
-            <span key={sport} style={{ display: 'flex', alignItems: 'center', gap: '.25rem', padding: '.18rem .55rem', background: 'rgba(210,140,60,.15)', border: '1px solid rgba(210,140,60,.35)', borderRadius: '2px', fontFamily: "'Mulish',sans-serif", fontSize: '.58rem', fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#d28c3c' }}>
-              {SPORT_ICONS[sport] || '🏅'} {sport}
-            </span>
-          ))}
+          {venue.sports && typeof venue.sports === 'string' && [...new Set(venue.sports.split(','))].map(sport => {
+            const trimmedSport = sport.trim();
+            if (!trimmedSport) return null;
+            return (
+              <span key={trimmedSport} style={{ display: 'flex', alignItems: 'center', gap: '.25rem', padding: '.18rem .55rem', background: 'rgba(210,140,60,.15)', border: '1px solid rgba(210,140,60,.35)', borderRadius: '2px', fontFamily: "'Mulish',sans-serif", fontSize: '.58rem', fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#d28c3c' }}>
+                {SPORT_ICONS[trimmedSport] || '🏅'} {trimmedSport}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -130,19 +134,19 @@ export default function VenueCard({ venue, index = 0 }) {
       <div style={{ position: 'relative', zIndex: 2, padding: '1.1rem 1.25rem 1.25rem' }}>
         <h3 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-.02em', color: hov ? '#f5efe6' : 'rgba(245,239,230,.9)', marginBottom: '.28rem', lineHeight: 1.25, transition: 'color .25s' }}>{venue.Name}</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', marginBottom: '.65rem' }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(210,140,60,.6)" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(210,140,60,.6)" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
           <span style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.72rem', color: 'rgba(245,239,230,.38)' }}>{venue.Location}</span>
         </div>
         <div style={{ height: '1px', background: `linear-gradient(to right, ${hov ? 'rgba(210,140,60,.25)' : 'rgba(245,239,230,.06)'}, transparent)`, marginBottom: '.75rem', transition: 'background .3s' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-            <Stars rating={venue.avgRating} />
-            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '.82rem', color: '#f5efe6' }}>{venue.avgRating.toFixed(1)}</span>
+            <Stars rating={venue.avgRating || 0} />
+            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '.82rem', color: '#f5efe6' }}>{(venue.avgRating || 0).toFixed(1)}</span>
             {venue.reviewCount > 0 && <span style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.65rem', color: 'rgba(245,239,230,.28)' }}>({venue.reviewCount})</span>}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.62rem', color: 'rgba(245,239,230,.3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>from</div>
-            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '.82rem', color: '#d28c3c', lineHeight: 1 }}>Rs. {venue.minPrice.toLocaleString()}/hr</div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '.82rem', color: '#d28c3c', lineHeight: 1 }}>Rs. {(venue.minPrice || 0).toLocaleString()}/hr</div>
           </div>
         </div>
         <Link href={`/venues/${venue.VenueID}`} style={{
@@ -157,7 +161,7 @@ export default function VenueCard({ venue, index = 0 }) {
         }}>
           <span>View Details</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: hov ? 'translateX(3px)' : 'translateX(0)', transition: 'transform .3s cubic-bezier(.22,1,.36,1)' }}>
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
           </svg>
         </Link>
       </div>

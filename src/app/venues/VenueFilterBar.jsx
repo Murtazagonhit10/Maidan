@@ -1,23 +1,26 @@
 'use client';
 import { useState, useRef } from 'react';
-import { ALL_SPORTS, ALL_CITIES, PRICE_MIN, PRICE_MAX, QUICK_PICKS } from './venuesData';
 
 /* ═══════════════════════════════════════════════════════
-   VenueFilterBar  —  v4
-   KEY FIX: sticky position requires NO ancestor with
-   overflow:hidden/auto/scroll. The collapsible panel
-   uses max-height transition with overflow:clip (not
-   overflow:hidden) so sticky still works.
+   VenueFilterBar  —  Now accepts dynamic data from API
 ═══════════════════════════════════════════════════════ */
 
 /* ── Quick Pick card ── */
 const QP_META = {
-  top_rated: { icon: '⭐', title: 'Top Rated', sub: 'Rating 4.7+', color: '#d4a030', bg: 'rgba(212,160,48,.16)' },
-  budget: { icon: '💚', title: 'Budget Pick', sub: 'Under Rs.1,200/hr', color: '#50c878', bg: 'rgba(80,200,120,.14)' },
-  multi_sport: { icon: '🎯', title: 'Multi-Sport', sub: '2+ sports on site', color: '#d28c3c', bg: 'rgba(210,140,60,.16)' },
-  new: { icon: '✨', title: 'Newly Added', sub: 'Listed after Aug', color: '#a78bfa', bg: 'rgba(167,139,250,.14)' },
-  lahore: { icon: '📍', title: 'Lahore Only', sub: 'City of venues', color: '#f87171', bg: 'rgba(248,113,113,.14)' },
+  top_rated: { icon: '', title: 'Top Rated', sub: 'Rating 4.7+', color: '#d4a030', bg: 'rgba(212,160,48,.16)' },
+  budget: { icon: '', title: 'Budget Pick', sub: 'Under Rs.1,200/hr', color: '#50c878', bg: 'rgba(80,200,120,.14)' },
+  multi_sport: { icon: '', title: 'Multi-Sport', sub: '2+ sports on site', color: '#d28c3c', bg: 'rgba(210,140,60,.16)' },
+  new: { icon: '', title: 'Newly Added', sub: 'Listed after Aug', color: '#a78bfa', bg: 'rgba(167,139,250,.14)' },
+  lahore: { icon: '', title: 'Lahore Only', sub: 'City of venues', color: '#f87171', bg: 'rgba(248,113,113,.14)' },
 };
+
+const QUICK_PICKS = [
+  { id: 'top_rated', label: 'Top Rated', filter: v => v.avgRating >= 4.7 },
+  { id: 'budget', label: 'Budget Friendly', filter: v => (v.minPrice || 0) <= 1200 },
+  { id: 'multi_sport', label: 'Multi-Sport', filter: v => v.sports && v.sports.split(',').length > 1 },
+  { id: 'new', label: 'Recently Added', filter: v => new Date(v.RegistrationDate) > new Date('2023-08-01') },
+  { id: 'lahore', label: 'Lahore Only', filter: v => v.City === 'Lahore' },
+];
 
 function QuickPickCard({ qp, active, onClick, count }) {
   const [hov, setHov] = useState(false);
@@ -37,38 +40,19 @@ function QuickPickCard({ qp, active, onClick, count }) {
         position: 'relative', overflow: 'hidden',
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         padding: '.85rem 1.15rem', minWidth: '128px', flexShrink: 0,
-        /* Hover bg now uses amber like SportCard: rgba(210,140,60,.07) */
-        background: active ? meta.bg
-          : hov ? 'rgba(210,140,60,.07)'
-            : 'rgba(245,239,230,.02)',
-        /* Hover border now uses amber like SportCard */
-        border: `1.5px solid ${active ? meta.color
-            : hov ? 'rgba(210,140,60,.35)'
-              : 'rgba(245,239,230,.08)'
-          }`,
+        background: active ? meta.bg : hov ? 'rgba(210,140,60,.07)' : 'rgba(245,239,230,.02)',
+        border: `1.5px solid ${active ? meta.color : hov ? 'rgba(210,140,60,.35)' : 'rgba(245,239,230,.08)'}`,
         borderRadius: '8px', cursor: 'pointer',
         transform: active ? 'translateY(-3px) scale(1.02)' : hov ? 'translateY(-2px)' : 'translateY(0)',
-        /* Hover shadow: amber glow matching SportCard */
-        boxShadow: active
-          ? `0 8px 24px ${meta.bg}, 0 0 0 1px ${meta.color}22 inset`
-          : hov
-            ? '0 4px 16px rgba(210,140,60,.12)'   /* ← same as SportCard */
-            : 'none',
+        boxShadow: active ? `0 8px 24px ${meta.bg}, 0 0 0 1px ${meta.color}22 inset` : hov ? '0 4px 16px rgba(210,140,60,.12)' : 'none',
         transition: 'all .3s cubic-bezier(.22,1,.36,1)',
       }}>
-      {/* Top accent line — shows on active OR hover */}
       {(active || hov) && <div style={{ position: 'absolute', top: 0, left: hov && !active ? '25%' : '15%', right: hov && !active ? '25%' : '15%', height: active ? '2px' : '1.5px', background: `linear-gradient(to right, transparent, ${active ? meta.color : 'rgba(210,140,60,.5)'}, transparent)`, transition: 'all .35s cubic-bezier(.22,1,.36,1)' }} />}
-      {/* Spotlight — amber on hover, meta-color on active */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: (hov || active) ? 1 : 0, transition: 'opacity .3s', background: `radial-gradient(circle 90px at ${shine.x}% ${shine.y}%, ${active ? meta.bg : 'rgba(210,140,60,.08)'} 0%, transparent 70%)` }} />
-      {/* Shimmer on active */}
       {active && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%)', animation: 'qpShimmer 2.4s ease-in-out infinite' }} />}
-      {/* Icon — glow amber on hover, meta-color on active */}
       <span style={{ fontSize: '1.35rem', lineHeight: 1, marginBottom: '.38rem', filter: active ? `drop-shadow(0 0 6px ${meta.color}88)` : hov ? 'drop-shadow(0 0 5px rgba(210,140,60,.6))' : 'none', transition: 'filter .3s' }}>{meta.icon}</span>
-      {/* Title — cream on hover, like SportCard */}
       <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: '.8rem', letterSpacing: '-.01em', color: active ? '#f5efe6' : hov ? '#f5efe6' : 'rgba(245,239,230,.42)', lineHeight: 1.2, transition: 'color .25s' }}>{meta.title}</div>
-      {/* Sub — amber on hover, like SportCard sub */}
       <div style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.58rem', letterSpacing: '.07em', color: active ? meta.color : hov ? '#d28c3c' : 'rgba(245,239,230,.25)', marginTop: '.16rem', transition: 'color .25s' }}>{meta.sub}</div>
-      {/* Count badge */}
       {count > 0 && (
         <div style={{ position: 'absolute', top: '.5rem', right: '.5rem', background: active ? meta.color : hov ? 'rgba(210,140,60,.2)' : 'rgba(245,239,230,.1)', color: active ? '#0f0a06' : hov ? '#d28c3c' : 'rgba(245,239,230,.38)', fontFamily: "'Mulish',sans-serif", fontSize: '.55rem', fontWeight: 700, borderRadius: '20px', padding: '.08rem .38rem', minWidth: 18, textAlign: 'center', transition: 'all .25s' }}>
           {count}
@@ -241,17 +225,25 @@ const SL = ({ children }) => (
 );
 
 /* ════════════════════════════════════════════════════════
-   MAIN EXPORT
-   NOT sticky — scrolls away normally with the page.
+   MAIN EXPORT — accepts dynamic data from parent
 ════════════════════════════════════════════════════════ */
-export default function VenueFilterBar({ filters, onChange, resultCount, allVenues = [] }) {
-  const { sport, city, priceMin, priceMax, minRating, sortBy, quickPick } = filters;
-  const [open, setOpen] = useState(true);
+export default function VenueFilterBar({
+  filters,
+  onChange,
+  resultCount,
+  allVenues = [],
+  priceMin = 0,
+  priceMax = 5000,
+  allSports = [],
+  allCities = []
+}) {
+  const { sport, city, minRating, sortBy, quickPick } = filters;
+  const [open, setOpen] = useState(window.innerWidth > 768);
 
-  const activeCount = [sport.length > 0, city !== '', priceMin > PRICE_MIN || priceMax < PRICE_MAX, minRating > 0, quickPick !== ''].filter(Boolean).length;
+  const activeCount = [sport.length > 0, city !== '', filters.priceMin > priceMin || filters.priceMax < priceMax, minRating > 0, quickPick !== ''].filter(Boolean).length;
   const set = (k, v) => onChange({ ...filters, [k]: v });
   const toggleSport = s => set('sport', sport.includes(s) ? sport.filter(x => x !== s) : [...sport, s]);
-  const clearAll = () => onChange({ sport: [], city: '', priceMin: PRICE_MIN, priceMax: PRICE_MAX, minRating: 0, sortBy: 'recommended', quickPick: '' });
+  const clearAll = () => onChange({ sport: [], city: '', priceMin: priceMin, priceMax: priceMax, minRating: 0, sortBy: 'recommended', quickPick: '' });
 
   const qpCounts = {};
   QUICK_PICKS.forEach(qp => { qpCounts[qp.id] = allVenues.filter(qp.filter).length; });
@@ -259,25 +251,61 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
   return (
     <>
       <style>{`
-        @keyframes qpShimmer { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
-        .filter-panel-body {
-          max-height: 600px;
-          overflow: hidden;
-          transition: max-height .42s cubic-bezier(.22,1,.36,1);
-        }
-        .filter-panel-body.closed { max-height: 0; }
-        @media (max-width: 1100px) {
-          .filter-main-grid { grid-template-columns: 1fr !important; }
-          .filter-col-divider { display: none !important; }
-        }
-        @media (max-width: 768px) {
-          .filter-mobile-btn { display: flex !important; }
-          .filter-quick-row  { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
-          .filter-main-wrap  { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
-        }
-      `}</style>
+  @keyframes qpShimmer { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+  
+  .filter-panel-body {
+    max-height: none;
+    overflow: visible;
+    transition: max-height .42s cubic-bezier(.22,1,.36,1);
+  }
+  .filter-panel-body.closed { max-height: 0; }
+  
+  /* Large screens (default) */
+  .filter-main-grid {
+    display: grid;
+    grid-template-columns: auto 1px auto 1px minmax(280px, 1fr) 1px auto;
+    gap: 0 1.2rem;
+    align-items: start;
+  }
+  
+  /* Medium screens (1300px and below) */
+  @media (max-width: 1300px) {
+    .filter-main-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+    .filter-col-divider {
+      display: none !important;
+    }
+  }
+  
+  /* Tablet (1100px and below) */
+  @media (max-width: 1100px) {
+    .filter-main-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+    .filter-col-divider {
+      display: none !important;
+    }
+  }
+  
+  /* Mobile (768px and below) */
+  @media (max-width: 768px) {
+    .filter-mobile-btn { display: flex !important; }
+    .filter-quick-row { 
+      padding-left: 1.25rem !important; 
+      padding-right: 1.25rem !important;
+      padding-top: 1rem !important;
+      padding-bottom: 1rem !important;
+    }
+    .filter-main-wrap { 
+      padding-left: 1.25rem !important; 
+      padding-right: 1.25rem !important; 
+    }
+  }
+`}</style>
 
-      {/* Plain static wrapper — NOT sticky, scrolls away with the page */}
       <div
         style={{
           background: 'rgba(12,8,4,.96)',
@@ -288,15 +316,9 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
         }}
       >
 
-        {/* ── Quick Picks strip ──
-            STICKY FIX: The outer wrapper has NO overflow property.
-            overflow:auto/hidden on ANY ancestor (even just one axis)
-            breaks position:sticky on a parent element.
-            The cards live in an INNER div that handles horizontal scroll. */}
         <div className="filter-quick-row"
           style={{ padding: '.95rem 3rem .88rem', borderBottom: '1px solid rgba(245,239,230,.05)', display: 'flex', alignItems: 'center', gap: '.65rem' }}>
 
-          {/* Label + clear — fixed left, never scrolls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '.42rem', flexShrink: 0 }}>
             <span style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.58rem', fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(245,239,230,.28)', whiteSpace: 'nowrap' }}>
               Quick Picks
@@ -310,14 +332,10 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
             )}
           </div>
 
-          {/* Cards row — this inner div scrolls horizontally on mobile,
-              NOT the outer row. This is the key: overflow on a child
-              never breaks sticky on an ancestor. */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: '.65rem', overflowX: 'auto', flex: 1,
-            /* hide scrollbar but keep functionality */
             scrollbarWidth: 'none', msOverflowStyle: 'none',
-            paddingBottom: '2px', /* prevent clipping box-shadow on cards */
+            paddingBottom: '2px',
           }}>
             {QUICK_PICKS.map(qp => (
               <QuickPickCard key={qp.id} qp={qp} active={quickPick === qp.id} count={qpCounts[qp.id] || 0}
@@ -325,7 +343,6 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
             ))}
           </div>
 
-          {/* Mobile expand toggle */}
           <button type="button" onClick={() => setOpen(o => !o)}
             className="filter-mobile-btn"
             style={{ display: 'none', flexShrink: 0, alignItems: 'center', gap: '.4rem', padding: '.35rem .75rem', background: 'rgba(245,239,230,.04)', border: '1px solid rgba(245,239,230,.12)', borderRadius: '4px', cursor: 'pointer', fontFamily: "'Mulish',sans-serif", fontSize: '.68rem', color: 'rgba(245,239,230,.4)', whiteSpace: 'nowrap' }}>
@@ -334,37 +351,33 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
           </button>
         </div>
 
-        {/* ── Main filter panel — overflow:clip to preserve sticky ── */}
         <div className={`filter-panel-body${open ? '' : ' closed'}`}>
           <div className="filter-main-wrap"
             style={{ padding: '1.2rem 3rem 1.35rem' }}>
             <div className="filter-main-grid"
-              style={{ display: 'grid', gridTemplateColumns: 'auto 1px auto 1px 1fr 1px auto', gap: '0 1.8rem', alignItems: 'start' }}>
+              style={{ display: 'grid', gridTemplateColumns: 'auto 1px auto 1px minmax(280px, 1fr) 1px auto', gap: '0 1.2rem', alignItems: 'start' }}>
 
-              {/* Sport */}
               <div>
                 <SL>Sport</SL>
                 <div style={{ display: 'flex', gap: '.62rem', flexWrap: 'wrap' }}>
-                  {ALL_SPORTS.map(s => <SportCard key={s} sport={s} active={sport.includes(s)} onClick={() => toggleSport(s)} />)}
+                  {allSports.map(s => <SportCard key={s} sport={s} active={sport.includes(s)} onClick={() => toggleSport(s)} />)}
                 </div>
               </div>
               <div className="filter-col-divider" style={{ background: 'rgba(245,239,230,.07)', alignSelf: 'stretch' }} />
 
-              {/* City */}
               <div>
                 <SL>City</SL>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
                   <CityPill city="All Cities" active={city === ''} onClick={() => set('city', '')} />
-                  {ALL_CITIES.map(c => <CityPill key={c} city={c} active={city === c} onClick={() => set('city', city === c ? '' : c)} />)}
+                  {allCities.map(c => <CityPill key={c} city={c} active={city === c} onClick={() => set('city', city === c ? '' : c)} />)}
                 </div>
               </div>
               <div className="filter-col-divider" style={{ background: 'rgba(245,239,230,.07)', alignSelf: 'stretch' }} />
 
-              {/* Price + Rating + Sort */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
                 <div>
                   <SL>Price / Hour</SL>
-                  <PriceSlider min={PRICE_MIN} max={PRICE_MAX} valueMin={priceMin} valueMax={priceMax}
+                  <PriceSlider min={priceMin} max={priceMax} valueMin={filters.priceMin} valueMax={filters.priceMax}
                     onChange={(lo, hi) => onChange({ ...filters, priceMin: lo, priceMax: hi })} />
                 </div>
                 <div>
@@ -378,7 +391,6 @@ export default function VenueFilterBar({ filters, onChange, resultCount, allVenu
               </div>
               <div className="filter-col-divider" style={{ background: 'rgba(245,239,230,.07)', alignSelf: 'stretch' }} />
 
-              {/* Results + Clear */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%', minWidth: '110px' }}>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: '2.3rem', color: '#d28c3c', lineHeight: 1, letterSpacing: '-.04em' }}>{resultCount}</div>

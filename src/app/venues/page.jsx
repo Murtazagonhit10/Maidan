@@ -1,22 +1,21 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import '@/app/tokens.css';
 
 import VenuesHero from './VenuesHero';
 import VenueFilterBar from './VenueFilterBar';
 import VenueCard from './VenueCard';
-import { VENUES, PRICE_MIN, PRICE_MAX, QUICK_PICKS } from './venuesData';
 
 const PER_PAGE = 9;
 
 const DEFAULT_FILTERS = {
   sport: [], city: '',
-  priceMin: PRICE_MIN, priceMax: PRICE_MAX,
+  priceMin: 800,  // Temporary initial value, will be updated after data loads
+  priceMax: 5000,
   minRating: 0, sortBy: 'recommended', quickPick: '',
 };
-
 function EmptyState({ onClear }) {
   return (
     <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '7rem 2rem', textAlign: 'center', animation: 'vcFadeUp .5s cubic-bezier(.22,1,.36,1)' }}>
@@ -69,28 +68,78 @@ function Pagination({ page, totalPages, onChange }) {
 export default function VenuesPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
+  const [venues, setVenues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const gridRef = useRef(null);
 
+  // Fetch venues from API
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/venues');
+        if (!response.ok) throw new Error('Failed to fetch venues');
+        const data = await response.json();
+        setVenues(data);
+
+        // Calculate min/max prices from actual data
+        const actualMinPrice = data.length ? Math.min(...data.map(v => v.minPrice || 0)) : 0;
+        const actualMaxPrice = data.length ? Math.max(...data.map(v => v.maxPrice || 5000)) : 5000;
+
+        // Update filters with actual min price
+        setFilters(prev => ({
+          ...prev,
+          priceMin: actualMinPrice,
+          priceMax: actualMaxPrice
+        }));
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching venues:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVenues();
+  }, []);
+
+  // Calculate filter values from actual data
+  const priceMin = venues.length ? Math.min(...venues.map(v => v.minPrice || 0)) : 0;
+  const priceMax = venues.length ? Math.max(...venues.map(v => v.maxPrice || 5000)) : 5000;
+  const allSports = [...new Set(venues.flatMap(v => v.sports ? v.sports.split(',') : []))];
+  const allCities = [...new Set(venues.map(v => v.City))];
+
   const filtered = useMemo(() => {
-    let list = [...VENUES];
-    if (filters.quickPick) {
-      const qp = QUICK_PICKS.find(q => q.id === filters.quickPick);
-      if (qp) list = list.filter(qp.filter);
-    } else {
-      if (filters.sport.length > 0) list = list.filter(v => filters.sport.some(s => v.sports.includes(s)));
-      if (filters.city) list = list.filter(v => v.City === filters.city);
-      list = list.filter(v => v.minPrice <= filters.priceMax && v.maxPrice >= filters.priceMin);
-      if (filters.minRating > 0) list = list.filter(v => v.avgRating >= filters.minRating);
+    let list = [...venues];
+
+    if (filters.sport.length > 0) {
+      list = list.filter(v => {
+        const venueSports = v.sports ? v.sports.split(',') : [];
+        return filters.sport.some(s => venueSports.includes(s));
+      });
     }
+    if (filters.city) list = list.filter(v => v.City === filters.city);
+    if (filters.priceMin > 0 || filters.priceMax < priceMax) {
+      list = list.filter(v => {
+        const min = v.minPrice || 0;
+        const max = v.maxPrice || priceMax;
+        return min <= filters.priceMax && max >= filters.priceMin;
+      });
+    }
+    if (filters.minRating > 0) {
+      list = list.filter(v => (v.avgRating || 0) >= filters.minRating);
+    }
+
     switch (filters.sortBy) {
-      case 'rating_desc': list.sort((a, b) => b.avgRating - a.avgRating); break;
-      case 'price_asc': list.sort((a, b) => a.minPrice - b.minPrice); break;
-      case 'price_desc': list.sort((a, b) => b.maxPrice - a.maxPrice); break;
+      case 'rating_desc': list.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0)); break;
+      case 'price_asc': list.sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0)); break;
+      case 'price_desc': list.sort((a, b) => (b.maxPrice || 0) - (a.maxPrice || 0)); break;
       case 'newest': list.sort((a, b) => new Date(b.RegistrationDate) - new Date(a.RegistrationDate)); break;
-      default: list.sort((a, b) => (b.avgRating * Math.log(b.reviewCount + 1)) - (a.avgRating * Math.log(a.reviewCount + 1)));
+      default: list.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
     }
     return list;
-  }, [filters]);
+  }, [venues, filters, priceMax]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const pageItems = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -100,12 +149,37 @@ export default function VenuesPage() {
     setPage(1);
   }, []);
 
-  const clearFilters = useCallback(() => { setFilters(DEFAULT_FILTERS); setPage(1); }, []);
+  const clearFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+  }, []);
 
   const handlePageChange = (p) => {
     setPage(p);
     gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ minHeight: '100vh', background: '#0f0a06', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#d28c3c', fontFamily: "'Mulish',sans-serif" }}>Loading venues...</div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ minHeight: '100vh', background: '#0f0a06', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#e05050', fontFamily: "'Mulish',sans-serif" }}>Error: {error}</div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -123,16 +197,20 @@ export default function VenuesPage() {
       <Navbar />
 
       <VenuesHero
-        totalVenues={VENUES.length}
-        totalCities={new Set(VENUES.map(v => v.City)).size}
-        totalSports={3}
+        totalVenues={venues.length}
+        totalCities={allCities.length}
+        totalSports={allSports.length}
       />
 
       <VenueFilterBar
         filters={filters}
         onChange={handleFilterChange}
         resultCount={filtered.length}
-        allVenues={VENUES}
+        allVenues={venues}
+        priceMin={priceMin}
+        priceMax={priceMax}
+        allSports={allSports}
+        allCities={allCities}
       />
 
       <main style={{ background: 'var(--bg)', minHeight: '60vh', position: 'relative' }}>
@@ -145,7 +223,7 @@ export default function VenuesPage() {
             <div>
               <div style={{ fontFamily: "'Mulish',sans-serif", fontSize: '.62rem', fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', color: '#d28c3c', marginBottom: '.5rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
                 <span style={{ width: 14, height: 1, background: '#d28c3c', display: 'block' }} />
-                {filters.quickPick ? QUICK_PICKS.find(q => q.id === filters.quickPick)?.label ?? 'Filtered'
+                {filters.quickPick ? 'Quick Pick'
                   : filters.sport.length > 0 ? filters.sport.join(' & ')
                     : filters.city ? `${filters.city} Venues`
                       : 'All Venues'}
