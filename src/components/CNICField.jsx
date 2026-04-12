@@ -62,7 +62,7 @@ export default function CNICField({ value, onChange, error }) {
                         width: '100%', padding: '.82rem 2.6rem .82rem 1.1rem',
                         background: focused ? 'rgba(210,140,60,.06)' : 'rgba(245,239,230,.03)',
                         border: `1px solid ${error ? 'rgba(220,80,60,.6)' : focused ? 'rgba(210,140,60,.55)' : 'rgba(245,239,230,.12)'}`,
-                        color: '#f5efe6', fontFamily: "'Mulish',sans-serif",
+                        color: '#f5eff6', fontFamily: "'Mulish',sans-serif",
                         fontSize: '.9rem', fontWeight: 300, outline: 'none',
                         transition: 'border-color .25s, background .25s',
                         borderRadius: '2px', letterSpacing: '.06em',
