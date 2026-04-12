@@ -10,7 +10,7 @@ export default function DashboardPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // Check if user is logged in
+        // Check if user is 
         const userData = localStorage.getItem('user');
         if (!userData) {
             router.push('/login');
