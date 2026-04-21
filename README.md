@@ -34,7 +34,7 @@
 
 ---
 
-### 📁 Backend — `src/app/api/` *(maps to required `backend/`)*
+### Backend — `src/app/api/` *(maps to required `backend/`)*
 
 Next.js API routes serve as the full backend. Every file named `route.js` is a standalone API endpoint.
 
@@ -69,12 +69,12 @@ src/app/api/                            ← Backend (equivalent to backend/app/)
 lib/db.js                               ← MySQL database connection pool
 middleware.js                           ← JWT authentication middleware
 package.json                            ← Dependencies (= backend requirements.txt)
-.env.example                            ← Environment variables template ✅
+.env.example                            ← Environment variables template 
 ```
 
 ---
 
-### 📁 Frontend — `src/app/` + `src/components/` + `public/` *(maps to required `frontend/`)*
+### Frontend — `src/app/` + `src/components/` + `public/` *(maps to required `frontend/`)*
 
 ```
 src/
@@ -130,36 +130,36 @@ public/                                 ← Static assets (equivalent to fronten
 
 ---
 
-### 📁 Database — `database/` *(matches required `database/` exactly)*
+### Database — `database/` *(matches required `database/` exactly)*
 
 ```
 database/
-├── maidan_schema.sql     ← DDL: all CREATE TABLE statements        [= schema.sql/seed.sql] ✅
+├── maidan_schema.sql     ← DDL: all CREATE TABLE statements        [= schema.sql/seed.sql] 
 ├── main.sql   
 ├── Maidan_schema.pdf     ← Schema diagram/ another ERD
-└── erd.png               ← Entity Relationship Diagram                            ✅
+└── erd.png               ← Entity Relationship Diagram                            
 ```
 
 ---
 
-### 📁 Documentation — `docs/` *(matches required `docs/` exactly)*
+### Documentation — `docs/` *(matches required `docs/` exactly)*
 
 ```
 docs/
-└── Maidan Iteration 1 report.docx     ← Iteration 1 document                            ✅
+└── Maidan Iteration 1 report.docx     ← Iteration 1 document                            
 ```
 
 > `report.docx` (final report) will be added to `docs/` before the final submission deadline.
 
 ---
 
-### 📄 Root-level Files
+### Root-level Files
 
 ```
-README.md           ← This file                                                    ✅
-.env.example        ← Environment variable template (no real secrets committed)    ✅
-.gitignore          ← Excludes .env, node_modules, .next                           ✅
-package.json        ← All project dependencies                                     ✅
+README.md           ← This file                                                    
+.env.example        ← Environment variable template (no real secrets committed)    
+.gitignore          ← Excludes .env, node_modules, .next                           
+package.json        ← All project dependencies                                     
 package-lock.json   ← Locked dependency versions
 next.config.mjs     ← Next.js configuration
 jsconfig.json       ← Path aliases (@/components, @/app)
@@ -242,22 +242,22 @@ npm start
 
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|:---:|-------------|
-| `POST` | `/api/auth/register` | ❌ | Register as Player or Owner |
-| `POST` | `/api/auth/login` | ❌ | Login, sets JWT cookie |
-| `POST` | `/api/logout` | ✅ | Clears auth cookie |
-| `GET` | `/api/venues` | ❌ | List all active venues |
-| `POST` | `/api/venues` | ✅ Owner | Create a new venue |
-| `GET` | `/api/venues/:id` | ❌ | Get venue details |
-| `GET` | `/api/venues/:id/courts` | ❌ | List courts for a venue |
-| `GET` | `/api/venues/owner/:id` | ✅ | Get owner's venues |
-| `GET` | `/api/courts` | ❌ | List all courts |
-| `GET` | `/api/courts/search` | ❌ | Filter courts by sport/price/area |
-| `GET` | `/api/slots/available` | ❌ | Available time slots for a court |
-| `GET` | `/api/bookings` | ✅ | Get user's bookings |
-| `POST` | `/api/bookings` | ✅ | Create a booking |
-| `GET` | `/api/users/:id` | ✅ | Get user profile |
-| `GET` | `/api/users/:id/bookings` | ✅ | Get all bookings for a user |
-| `GET` | `/api/sports` | ❌ | List all sports |
+| `POST` | `/api/auth/register` | NO | Register as Player or Owner |
+| `POST` | `/api/auth/login` | NO | Login, sets JWT cookie |
+| `POST` | `/api/logout` |  | Clears auth cookie |
+| `GET` | `/api/venues` | NO | List all active venues |
+| `POST` | `/api/venues` |  Owner | Create a new venue |
+| `GET` | `/api/venues/:id` | NO | Get venue details |
+| `GET` | `/api/venues/:id/courts` | NO | List courts for a venue |
+| `GET` | `/api/venues/owner/:id` |  | Get owner's venues |
+| `GET` | `/api/courts` | NO | List all courts |
+| `GET` | `/api/courts/search` | NO | Filter courts by sport/price/area |
+| `GET` | `/api/slots/available` | NO | Available time slots for a court |
+| `GET` | `/api/bookings` |  | Get user's bookings |
+| `POST` | `/api/bookings` |  | Create a booking |
+| `GET` | `/api/users/:id` |  | Get user profile |
+| `GET` | `/api/users/:id/bookings` |  | Get all bookings for a user |
+| `GET` | `/api/sports` | NO | List all sports |
 
 ---
 
@@ -291,17 +291,17 @@ See **`database/erd.png`** for the full Entity Relationship Diagram.
 
 | Status | Requirement |
 |:------:|-------------|
-| ✅ | Repository is set to **Public** |
-| ✅ | All team members have commits in the repository |
-| ✅ | `README.md` includes title, description, team, tech stack, and setup |
-| ✅ | Backend API routes present — `src/app/api/` (Next.js monorepo) |
-| ✅ | `package.json` present with all dependencies |
-| ✅ | Frontend source — `src/app/` and `src/components/` |
-| ✅ | Static assets — `public/pictures/` |
-| ✅ | `database/maidan_schema.sql` — DDL CREATE TABLE statements |
-| ✅ | `database/main.sql` — seed / sample data |
-| ✅ | `database/erd.png` — Entity Relationship Diagram |
-| ✅ | `docs/Maidan Iteration 1 report.docx` — Iteration document |
-| ✅ | `.env.example` — no real secrets committed |
-| ✅ | `.gitignore` — excludes `.env` and `node_modules` |
+|  | Repository is set to **Public** |
+|  | All team members have commits in the repository |
+|  | `README.md` includes title, description, team, tech stack, and setup |
+|  | Backend API routes present — `src/app/api/` (Next.js monorepo) |
+|  | `package.json` present with all dependencies |
+|  | Frontend source — `src/app/` and `src/components/` |
+|  | Static assets — `public/pictures/` |
+|  | `database/maidan_schema.sql` — DDL CREATE TABLE statements |
+|  | `database/main.sql` — seed / sample data |
+|  | `database/erd.png` — Entity Relationship Diagram |
+|  | `docs/Maidan Iteration 1 report.docx` — Iteration document |
+|  | `.env.example` — no real secrets committed |
+|  | `.gitignore` — excludes `.env` and `node_modules` |
 | ⬜ | `docs/report.docx` — add final report before deadline |
