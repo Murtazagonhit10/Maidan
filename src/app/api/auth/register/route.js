@@ -17,12 +17,7 @@ export async function POST(request) {
             FullName, 
             PhoneNumber, 
             Role,  // 'Player' or 'Owner'
-            DateOfBirth,
-            // Owner-specific fields (only if Role is 'Owner')
-            BusinessName,
-            BusinessAddress,
-            BusinessPhone,
-            NTNNumber  // Tax number for business
+            DateOfBirth
         } = body;
 
         // Validate required fields
@@ -46,7 +41,7 @@ export async function POST(request) {
             );
         }
 
-        // Validate CNIC format
+        // Validate CNIC format (matches your SQL data: 00000-0000000-0)
         const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
         if (!cnicRegex.test(CNIC)) {
             return NextResponse.json(
@@ -55,17 +50,12 @@ export async function POST(request) {
             );
         }
 
-        // Validate owner-specific fields
-        if (Role === 'Owner') {
-            if (!BusinessName || !BusinessAddress) {
-                return NextResponse.json(
-                    { 
-                        success: false, 
-                        error: 'Owners must provide Business Name and Business Address' 
-                    },
-                    { status: 400 }
-                );
-            }
+        // Validate Role
+        if (Role && !['Player', 'Owner', 'Admin'].includes(Role)) {
+            return NextResponse.json(
+                { success: false, error: 'Role must be Player, Owner, or Admin' },
+                { status: 400 }
+            );
         }
 
         // Get database connection
@@ -96,7 +86,7 @@ export async function POST(request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(Password, 10);
 
-        // Insert new user
+        // Insert new user (without OwnerProfiles table since it doesn't exist)
         const result = await pool.request()
             .input('email', sql.VarChar, Email)
             .input('cnic', sql.VarChar, CNIC)
@@ -113,23 +103,6 @@ export async function POST(request) {
 
         const newUser = result.recordset[0];
 
-        // If user is an Owner, create owner profile
-        if (Role === 'Owner') {
-            await pool.request()
-                .input('userId', sql.Int, newUser.UserID)
-                .input('businessName', sql.NVarChar, BusinessName)
-                .input('businessAddress', sql.NVarChar, BusinessAddress)
-                .input('businessPhone', sql.VarChar, BusinessPhone || PhoneNumber)
-                .input('ntnNumber', sql.VarChar, NTNNumber || null)
-                .input('isVerified', sql.Bit, 0)  // Owners need admin verification
-                .query(`
-                    INSERT INTO OwnerProfiles (UserID, BusinessName, BusinessAddress, BusinessPhone, NTNNumber, IsVerified, RegistrationDate)
-                    VALUES (@userId, @businessName, @businessAddress, @businessPhone, @ntnNumber, @isVerified, GETDATE())
-                `);
-            
-            console.log('✅ Owner profile created for user:', newUser.UserID);
-        }
-
         // Generate JWT token
         const token = jwt.sign(
             { 
@@ -145,7 +118,7 @@ export async function POST(request) {
         const response = NextResponse.json(
             {
                 success: true,
-                message: Role === 'Owner' ? 'Owner registration successful! Awaiting admin verification.' : 'Registration successful',
+                message: 'Registration successful',
                 user: {
                     id: newUser.UserID,
                     email: newUser.Email,
@@ -166,7 +139,7 @@ export async function POST(request) {
             path: '/'
         });
 
-        console.log('✅ Registration complete');
+        console.log('✅ Registration complete for user:', newUser.UserID);
         return response;
 
     } catch (error) {
@@ -176,6 +149,62 @@ export async function POST(request) {
             { 
                 success: false, 
                 error: 'Internal server error',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            },
+            { status: 500 }
+        );
+    }
+}
+
+// Add GET method for testing (returns list of users or test endpoint info)
+export async function GET(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const action = searchParams.get('action');
+        
+        const pool = await getConnection();
+        
+        // Test endpoint - just check connection
+        if (action === 'test') {
+            const result = await pool.request().query('SELECT GETDATE() as serverTime, DB_NAME() as databaseName');
+            return NextResponse.json({
+                success: true,
+                message: 'Registration API is working',
+                serverTime: result.recordset[0].serverTime,
+                database: result.recordset[0].databaseName
+            });
+        }
+        
+        // Get list of users (for testing only - protect this in production)
+        if (action === 'users') {
+            const result = await pool.request().query(`
+                SELECT UserID, Email, FullName, Role, PhoneNumber, RegistrationDate 
+                FROM Users 
+                ORDER BY RegistrationDate DESC
+            `);
+            return NextResponse.json({
+                success: true,
+                users: result.recordset
+            });
+        }
+        
+        // Default GET response - API info
+        return NextResponse.json({
+            success: true,
+            message: 'Registration API endpoint',
+            methods: ['POST'],
+            description: 'Use POST method to register a new user',
+            required_fields: ['Email', 'CNIC', 'Password', 'FullName'],
+            optional_fields: ['PhoneNumber', 'Role', 'DateOfBirth'],
+            valid_roles: ['Player', 'Owner', 'Admin']
+        });
+        
+    } catch (error) {
+        console.error('❌ GET request error:', error);
+        return NextResponse.json(
+            { 
+                success: false, 
+                error: 'Failed to process GET request',
                 details: process.env.NODE_ENV === 'development' ? error.message : undefined
             },
             { status: 500 }

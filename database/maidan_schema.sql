@@ -8,7 +8,6 @@ GO
 -- Create fresh database
 CREATE DATABASE Maidan;
 GO
-
 USE Maidan;
 GO
 
@@ -1093,3 +1092,6 @@ VALUES
 (3, '2026-03-30', '19:00', '20:00', 800, 0, 'Available'),
 (3, '2026-03-30', '20:00', '21:00', 800, 0, 'Available'),
 (3, '2026-03-30', '21:00', '22:00', 800, 0, 'Available');
+
+SELECT * from users
+select * from Slots

@@ -4,26 +4,36 @@ export function middleware(request) {
     const token = request.cookies.get('auth-token')?.value;
     const { pathname } = request.nextUrl;
 
-    // Public routes (no authentication needed)
-    const publicRoutes = ['/login', '/register'];
-    const isPublicRoute = publicRoutes.includes(pathname);
-
-    // API routes that are public
-    const publicApiRoutes = ['/api/login', '/api/register'];
-    const isPublicApi = publicApiRoutes.some(route => pathname.startsWith(route));
-
-    // Allow access to static files and public routes
-    if (isPublicRoute || isPublicApi || pathname.startsWith('/_next') || pathname.includes('.')) {
+    // ── 1. Always allow static files and Next.js internals ──
+    if (
+        pathname.startsWith('/_next') ||
+        pathname.includes('.')
+    ) {
         return NextResponse.next();
     }
 
-    // Protected routes - require authentication
-    if (!token && !isPublicRoute) {
-        // Redirect to login page
+    // ── 2. Always allow ALL /api/ routes ────────────────────
+    // Every API route does its own JWT check inside route.js
+    // Middleware does NOT need to protect them — it would only
+    // cause HTML redirect problems for API clients like Postman
+    if (pathname.startsWith('/api/')) {
+        return NextResponse.next();
+    }
+
+    // ── 3. Public page routes (no authentication needed) ────
+    const publicPages = ['/login', '/register', '/'];
+    if (publicPages.includes(pathname)) {
+        return NextResponse.next();
+    }
+
+    // ── 4. All other PAGE routes need authentication ────────
+    // If no auth-token cookie → redirect to login page
+    if (!token) {
         const url = new URL('/login', request.url);
         return NextResponse.redirect(url);
     }
 
+    // ── 5. User is authenticated, allow access ──────────────
     return NextResponse.next();
 }
 
